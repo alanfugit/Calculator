@@ -29,11 +29,8 @@ class CalculatorCommand extends Command
             //获得输入
             $input = $this->ask('Please enter an expression');
 
-            // 移除所有空格
-            $expression = str_replace(' ', '', $input);
-
             try {
-                $result = $this->evaluate($expression);
+                $result = $this->evaluate($input);
                 $this->line($result);
             } catch (\Throwable $e) {
                 $this->error('Invalid expression');
@@ -44,7 +41,9 @@ class CalculatorCommand extends Command
     // 使用eval函数计算表达式的值
     public function evaluate($input)
     {
-        return eval("return {$input};");
+        // 移除所有空格
+        $expression = str_replace(' ', '', $input);
+        return eval("return {$expression};");
     }
 
 }
