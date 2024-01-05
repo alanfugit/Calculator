@@ -30,12 +30,12 @@ class CalculatorCommand extends Command
             $input = $this->ask('Please enter an expression');
             // 移除所有空格
             $expression = str_replace(' ', '', $input);
-            try {
+            // try {
                 $result = $this->evaluate($expression);
                 $this->line($result);
-            } catch (\Throwable $e) {
-                $this->error('Invalid expression');
-            }
+            // } catch (\Throwable $e) {
+            //     $this->error('Invalid expression');
+            // }
         }
     }
 
@@ -55,7 +55,7 @@ class CalculatorCommand extends Command
             $operStr = str_replace(['(', ')'], '', $operAllStr); //过滤括号取得运算字符串
             $result = $this->operationStr($operStr); //当前计算结果
 
-            $repStr = str_replace($operAllStr, $result, $input); //把结果替换掉优先级括号
+            $repStr = str_replace($operAllStr, $result, $input); //把结果替换掉优先级括号的内容
 
             return $this->evaluate($repStr);
             
@@ -67,7 +67,7 @@ class CalculatorCommand extends Command
     }
 
     /**
-     * 执行运算表达式字符串
+     * 执行运算表达式字符串，因为有优先级，所以先执行一次乘除法，再执行一次加减法
      * @param String $operStr
      * @return Int
      */
@@ -81,7 +81,7 @@ class CalculatorCommand extends Command
 
         $result = $this->operation($operArr, true); //执行乘法除法
         
-        if(count($operArr) > 1) { //如果执行乘和除法还没算完，才继续执行加法运算, 如果执行加法，以+法算完的结果为准
+        if(count($operArr) >= 3) { //如果执行完乘和除法还数组存在3个或以上没运算的数值，才继续执行加法运算, 如果执行加法，以+法算完的结果为准
             $addAndSubOperArr = array_values($operArr); //把操作数组重新生成Key值顺序，剩下的就只是+-法了
             $result = $this->operation($addAndSubOperArr);
         }
