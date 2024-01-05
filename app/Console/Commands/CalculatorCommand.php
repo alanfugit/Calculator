@@ -30,12 +30,12 @@ class CalculatorCommand extends Command
             $input = $this->ask('Please enter an expression');
             // 移除所有空格
             $expression = str_replace(' ', '', $input);
-            // try {
+            try {
                 $result = $this->evaluate($expression);
                 $this->line($result);
-            // } catch (\Throwable $e) {
-            //     $this->error('Invalid expression');
-            // }
+            } catch (\Throwable $e) {
+                $this->error('Invalid expression');
+            }
         }
     }
 
