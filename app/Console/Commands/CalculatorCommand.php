@@ -28,22 +28,139 @@ class CalculatorCommand extends Command
         while(true) {
             //获得输入
             $input = $this->ask('Please enter an expression');
-
-            try {
-                $result = $this->evaluate($input);
+            // 移除所有空格
+            $expression = str_replace(' ', '', $input);
+            // try {
+                $result = $this->evaluate($expression);
                 $this->line($result);
-            } catch (\Throwable $e) {
-                $this->error('Invalid expression');
-            }
+            // } catch (\Throwable $e) {
+            //     $this->error('Invalid expression');
+            // }
         }
     }
 
-    // 使用eval函数计算表达式的值
-    public function evaluate($input)
+    /**
+     * 执行函数
+     * @param String $input 用户输入字符串
+     * @return Int
+     */
+    public function evaluate($input): Int
     {
-        // 移除所有空格
-        $expression = str_replace(' ', '', $input);
-        return eval("return {$expression};");
+        //查找最内层的()里面的数据，并运算后替换掉输入字符串
+        $blockFirst = strrpos($input, '('); //从右开始，取得最后的（        
+        $blockEnd = strpos($input, ')', $blockFirst); //根据开始位置匹配最后的关闭标签
+        $operAllStr = substr($input, $blockFirst, $blockEnd - $blockFirst + 1);//截取最里面括号字符串
+        
+        $operStr = str_replace(['(', ')'], '', $operAllStr);
+        $result = $this->operationStr($operStr); //当前计算结果
+        //把结果替换掉优先级括号
+        $repStr = str_replace($operAllStr, $result, $input);
+        //var_dump($result); 
+        if(strpos($repStr, '(') !== false) { //如果还存在括号优先级，递归处理
+            return $this->evaluate($repStr);
+        }else {
+            return $result;
+        }
+        //return $operStr;
+        //return eval("return {$input};");
+    }
+
+    /**
+     * 执行运算表达式字符串
+     * @param String $operStr
+     */
+    public function operationStr($operStr): Int 
+    {
+        preg_match_all('/(\\d+)|([-+()*\/])/', $operStr, $matches);// 用正则解析表达式把数据解出来
+        $result = 0; //结果初始化
+        
+        $operArr = $matches[0];
+
+        $this->operation($operArr, true); //执行乘法除法
+    
+        $addAndSubOperArr = array_values($operArr); //把操作数组重新生成Key值顺序，剩下的就只是+-法了
+
+        $result = $this->operation($addAndSubOperArr);
+
+        return $result;
+    }
+
+    /**
+     * 执行运算符实际运算
+     * @param Int $num1 计算的第一个数值
+     * @param Int $num2 计算的第二个数值
+     * @param String $char 运算符号
+     * @return Int
+     */
+    public function execOper($num1, $num2, $char): Int
+    {
+        $res = 0;
+        switch($char) {
+            case '+':
+                $res = $num1 + $num2;
+                break;
+            case '-': 
+                $res = $num1 - $num2;
+                break; 
+            case '*': 
+                $res = $num1 * $num2;
+                break; 
+            case '/': 
+                $res = $num1 / $num2;
+                break; 
+            default:
+                break;
+        }
+        return $res;
+    }
+
+    /**
+     * 运算结果
+     * @param Array &$array 引用数组，正则匹配后的匹配数组
+     * @param Boolean $priority 控制是否先执行乘法和除法
+     * @return Int
+     */
+    public function operation(&$array, $priority=false): Int
+    {
+        $arrCount = count($array);
+        $result = 0; //结果初始化
+        for($i = 1; $i < $arrCount; $i+=2) { //表达式运算符都是左右两边都有数字的，取得运算符运算两边的数值计算结果就可以
+             
+             if($priority && in_array($array[$i], ['+', '-'])) { //如果要计算优先级的乘法和除法，跳过本次循环
+                continue;
+             }
+             //取得运算符两边的数字
+             $adjacentArr = $this->getAdjacentKeys($array, $i); 
+             $leftNum = $adjacentArr[0]; //取得运算符左边数值
+             $rightNum = $adjacentArr[1]; //取得运算符右边数值
+             $result = $this->execOper($leftNum, $rightNum, $array[$i]); //计算结果
+
+             //把运算后的数据清除
+             //var_dump($array);
+             unset($array[$i-1], $array[$i], $array[$i+1]);
+             //把结果放进去清除的位置，并不改变原来的键值对,因为添加进去虽然指定了键值，但是排序还是在最后，所以要排序一下
+             $array[$i] = $result;
+             ksort($array);
+             var_dump($array);
+        }
+        //var_dump($array);
+        return $result;
+    }
+
+    /**
+     * 取得数组给定键的两边的值
+     * @param Array $array 要操作的数组
+     * @param Int $key 数组的某个键值
+     * @return Array
+     */
+    function getAdjacentKeys($array, $key): Array 
+    {
+        $keys = array_keys($array);
+        $index = array_search($key, $keys);
+        return [
+            $array[$keys[$index - 1]] ?? null, 
+            $array[$keys[$index + 1]] ?? null
+        ];
     }
 
 }
