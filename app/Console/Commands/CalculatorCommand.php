@@ -81,9 +81,9 @@ class CalculatorCommand extends Command
         
         $operArr = $matches[0];
 
-        $result = $this->operation($operArr, true); //执行乘法除法
-        
-        if(count($operArr) >= 3) { //如果执行完乘和除法还数组存在3个或以上没运算的数值，才继续执行加法运算, 如果执行加法，以+法算完的结果为准
+        $result = $this->operation($operArr, true); //按顺序执行乘法除法
+
+        if(in_array('+', $operArr) || in_array('-', $operArr)) { //如果执行完乘和除法数组还存在加减法没运算，才继续执行加减法运算, 如果执行加减法，以+法算完的结果为准
             $addAndSubOperArr = array_values($operArr); //把操作数组重新生成Key值顺序，剩下的就只是+-法了
             $result = $this->operation($addAndSubOperArr);
         }
