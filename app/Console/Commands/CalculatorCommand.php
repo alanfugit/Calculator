@@ -56,12 +56,14 @@ class CalculatorCommand extends Command
             $result = $this->operationStr($operStr); //当前计算结果
 
             $repStr = str_replace($operAllStr, $result, $input); //把结果替换掉优先级括号的内容
-
-            return $this->evaluate($repStr);
             
+            return $this->evaluate($repStr);   
         }else {
-
-            return $this->operationStr($input);
+            if($this->checkIsExpression($input)) { //如果是表达式，调用计算，否则直接返回输入
+                return $this->operationStr($input);
+            }else {
+                return $input;
+            }    
         }
         //return eval("return {$input};");
     }
@@ -71,7 +73,7 @@ class CalculatorCommand extends Command
      * @param String $operStr
      * @return Int
      */
-    public function operationStr($operStr): Int 
+    protected function operationStr($operStr): Int 
     {
         $result = 0; //结果初始化
 
@@ -94,7 +96,7 @@ class CalculatorCommand extends Command
      * @param Boolean $priority 控制是否先执行乘法和除法高优先级运算
      * @return Int
      */
-    public function operation(&$array, $priority=false): Int
+    protected function operation(&$array, $priority=false): Int
     {
         $arrCount = count($array);
         $result = 0; //结果初始化
@@ -105,12 +107,12 @@ class CalculatorCommand extends Command
              }
              //取得运算符两边的数字
              $adjacentArr = $this->getAdjacentKeys($array, $i); 
-             $leftNum = $adjacentArr[0]; //取得运算符左边数值
-             $rightNum = $adjacentArr[1]; //取得运算符右边数值
+             $leftNum = $array[$adjacentArr[0]]; //取得运算符左边数值
+             $rightNum = $array[$adjacentArr[1]]; //取得运算符右边数值
              $result = $this->execOper($leftNum, $rightNum, $array[$i]); //计算结果
 
              //把运算后的数据清除
-             unset($array[$i-1], $array[$i], $array[$i+1]);
+             unset($array[$adjacentArr[0]], $array[$i], $array[$adjacentArr[1]]);
              //把结果放进去清除的位置，并不改变原来的键值对,因为添加进去虽然指定了键值，但是排序还是在最后，所以要排序一下
              $array[$i] = $result;
              ksort($array);
@@ -126,7 +128,7 @@ class CalculatorCommand extends Command
      * @param String $char 运算符号
      * @return Int
      */
-    public function execOper($num1, $num2, $char): Int
+    protected function execOper($num1, $num2, $char): Int
     {
         $res = 0;
         switch($char) {
@@ -152,16 +154,35 @@ class CalculatorCommand extends Command
      * 取得数组给定键的两边的值
      * @param Array $array 要操作的数组
      * @param Int $key 数组的某个键值
-     * @return Array 反正前面和后面的数值
+     * @return Array 反正前面和后面的键值
      */
-    public function getAdjacentKeys($array, $key): Array 
+    protected function getAdjacentKeys($array, $key): Array 
     {
         $keys = array_keys($array);
         $index = array_search($key, $keys);
         return [
-            $array[$keys[$index - 1]] ?? null, 
-            $array[$keys[$index + 1]] ?? null
+            $keys[$index - 1] ?? null, 
+            $keys[$index + 1] ?? null
         ];
     }
+
+    /**
+     * 检查输入是否是表达式
+     * @param  String $str 要检查的字符串
+     * @return Boolean  
+     */
+    protected function checkIsExpression($str)
+    {
+        $res = false;
+        $chatArr = ['+', '-', '*', '/'];
+        foreach ($chatArr as $chat) {
+            if(strpos($str, $chat) !== false) {
+                $res = true;
+                break;
+            }
+        }
+        return $res;
+    }
+
 
 }
